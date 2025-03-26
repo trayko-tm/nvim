@@ -2,6 +2,23 @@ return {
 -- In your lazy.nvim config file
 -- tailwind-tools.lua
 {
+    "kylechui/nvim-surround",
+    version = "^3.0.0", -- Use for stability; omit to use `main` branch for the latest features
+    event = "VeryLazy",
+    config = function()
+        require("nvim-surround").setup({
+            -- Configuration here, or leave empty to use defaults
+        })
+    end
+},
+{
+  "nvim-telescope/telescope-file-browser.nvim",
+  dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+  config = function()
+    require("telescope").load_extension("file_browser")
+  end,
+},
+{
   "eero-lehtinen/oklch-color-picker.nvim",
   event = "VeryLazy",
   version = "*",
@@ -28,7 +45,7 @@ return {
   opts = {} -- your configuration
 },{
   "mattn/emmet-vim",
-  ft = { "html", "css", "javascript", "typescript", "jsx", "tsx" },
+  ft = { "html", "css", "javascript", "typescript", "typescriptreact", "jsx", "tsx" },
   config = function()
     vim.g.user_emmet_install_global = 0
     vim.api.nvim_create_autocmd("FileType", {
@@ -38,58 +55,78 @@ return {
       end,
     })
   end,
-}, {
-    "hrsh7th/nvim-cmp",
-    event = "InsertEnter",
-    dependencies = {
-      "hrsh7th/cmp-nvim-lsp",
-      "hrsh7th/cmp-buffer",
-      "hrsh7th/cmp-path",
-      "hrsh7th/cmp-cmdline",
-      "saadparwaiz1/cmp_luasnip",
-      "L3MON4D3/LuaSnip", -- Snippet engine
-    },
-    config = function()
-      local cmp = require("cmp")
-      local luasnip = require("luasnip")
+},
+{
+  "dcampos/cmp-emmet-vim",
+  ft = { "html", "css", "javascript", "typescript", "jsx", "tsx", "typescriptreact" },
+},
 
-      cmp.setup({
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
+{
+  "hrsh7th/nvim-cmp",
+  event = "InsertEnter",
+  dependencies = {
+    "hrsh7th/cmp-nvim-lsp",
+    "hrsh7th/cmp-buffer",
+    "hrsh7th/cmp-path",
+    "hrsh7th/cmp-cmdline",
+    "saadparwaiz1/cmp_luasnip",
+    "L3MON4D3/LuaSnip", -- Snippet engine
+    "dcampos/cmp-emmet-vim", -- Updated Emmet integration plugin
+    "tailwind-tools",
+    "onsails/lspkind-nvim"
+  },
+  config = function()
+    local cmp = require("cmp")
+    local luasnip = require("luasnip")
+    local lspkind = require("lspkind")
+
+    cmp.setup({
+      snippet = {
+        expand = function(args)
+          luasnip.lsp_expand(args.body)
+        end,
+      },
+      mapping = cmp.mapping.preset.insert({
+        ["<C-Space>"] = cmp.mapping.complete(),
+        ["<CR>"] = cmp.mapping.confirm({ select = false }),
+        ["<Tab>"] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_next_item()
+          elseif luasnip.expand_or_jumpable() then
+            luasnip.expand_or_jump()
+          else
+            fallback()
+          end
+        end, { "i", "s" }),
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
+          if cmp.visible() then
+            cmp.select_prev_item()
+          elseif luasnip.jumpable(-1) then
+            luasnip.jump(-1)
+          else
+            fallback()
+          end
+        end, { "i", "s" }),
+      }),
+      sources = cmp.config.sources({
+        { name = "nvim_lsp" },
+        { name = "luasnip" },
+        {
+          name = "emmet_vim",
+          option = { filetypes = { "html", "css", "javascript", "typescript", "jsx", "tsx", "typescriptreact" } },
         },
-        mapping = cmp.mapping.preset.insert({
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-          ["<Tab>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump()
-            else
-              fallback()
-            end
-          end, { "i", "s" }),
-          ["<S-Tab>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1)
-            else
-              fallback()
-            end
-          end, { "i", "s" }),
-        }),
-        sources = cmp.config.sources({
-          { name = "nvim_lsp" },
-          { name = "luasnip" },
-          }, {
-          { name = "buffer" },
-        }),
-      })
-    end,
-  }, {
+      }, {
+        { name = "buffer" },
+      }),
+      formatting = {
+        format = lspkind.cmp_format({
+          before = require("tailwind-tools.cmp").lskind_format,
+        })
+      }
+    })
+  end,
+}
+, {
     "aaronhallaert/advanced-git-search.nvim",
     cmd = { "AdvancedGitSearch" },
     config = function()
@@ -189,6 +226,9 @@ return {
           goto_previous_start = {
             ["[m"] = "@function.outer",
           },
+          goto_next_tag_end = {
+            ["]t"] = "@tag.open_end",
+          }
         },
       },
     })
@@ -199,11 +239,31 @@ return {
   dependencies = { "nvim-treesitter" },
   lazy = false
 },
+{"nvim-lua/plenary.nvim"},
+
 {
-    "ThePrimeagen/harpoon",
-    branch = "harpoon2",
-    dependencies = { "nvim-lua/plenary.nvim" }
-},
+  "ThePrimeagen/harpoon",
+  branch = "harpoon2",
+  name = "harpoon",
+  module = "harpoon",
+  dependencies = { {"nvim-lua/plenary.nvim"}},
+  keys = {
+    { "<C-a>", mode = "n", desc = "Add file to harpoon" },
+    { "<leader>h", mode = "n", desc = "Toggle harpoon menu" },
+  },
+  config = function()
+  local harpoon = require("harpoon")
+
+  -- REQUIRED
+  harpoon:setup()
+
+  vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
+  vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+  vim.keymap.set("n", "<C-n>", function() harpoon:list():next({ui_nav_wrap = true}) end)
+
+  end,
+}
+,
   {
   "nvim-cmp",
   dependencies = {
@@ -346,7 +406,7 @@ return {
   -- 	opts = {
   -- 		ensure_installed = {
   -- 			"vim", "lua", "vimdoc",
-  --      "html", "css"
+  --      "?tml", "css"
   -- 		},
   -- 	},
   -- },
