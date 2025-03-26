@@ -110,3 +110,19 @@ end)
 
 vim.opt.relativenumber=true
 vim.opt.number=false
+vim.opt.wrap = true
+vim.opt.linebreak = true
+
+
+-- Auto-hover on CursorHold
+vim.cmd [[
+  autocmd CursorHold * lua vim.lsp.buf.hover()
+]]
+
+vim.o.updatetime = 1000  -- 500ms idle before triggering CursorHold
+vim.o.winblend = 10
+vim.lsp.handlers["textDocument/hover"] =  vim.lsp.with(
+  vim.lsp.handlers.hover,
+  { border = "rounded" , focusable = false}
+)
+
