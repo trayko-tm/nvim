@@ -95,11 +95,15 @@ require "options"
 require "nvchad.autocmds"
 
 vim.api.nvim_create_autocmd("BufWritePost", {
-  pattern = { "*.ts", "*.js", "*.tsx", "*.json", ".css"},
+  pattern = { "*.ts", "*.js", "*.tsx", "*.json", "*.css", "*.go" },
   callback = function()
-    -- Run Prettier on the saved file
-    vim.cmd("silent! !npx prettier --write " .. vim.fn.expand("%"))
-    -- Reload the buffer to reflect Prettier's changes
+  local file = vim.fn.expand("%:p")
+  if vim.fn.expand("%:e") == "go" then
+    vim.cmd("silent! !gofmt -w " .. file)
+    vim.cmd("edit!")
+    else
+      vim.cmd("silent! !npx prettier --write " .. file)
+    end
     vim.cmd("edit")
   end,
 })
@@ -109,7 +113,7 @@ vim.schedule(function()
 end)
 
 vim.opt.relativenumber=true
-vim.opt.number=false
+vim.opt.number=true
 vim.opt.wrap = true
 vim.opt.linebreak = true
 
@@ -125,4 +129,6 @@ vim.lsp.handlers["textDocument/hover"] =  vim.lsp.with(
   vim.lsp.handlers.hover,
   { border = "rounded" , focusable = false}
 )
+
+
 

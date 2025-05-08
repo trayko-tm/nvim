@@ -10,59 +10,24 @@ return {
             -- Configuration here, or leave empty to use defaults
         })
     end
-},
-{
-  "nvim-telescope/telescope-file-browser.nvim",
-  dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
-  config = function()
-    require("telescope").load_extension("file_browser")
-  end,
-},
-{
-  "eero-lehtinen/oklch-color-picker.nvim",
-  event = "VeryLazy",
-  version = "*",
-  keys = {
-    -- One handed keymap recommended, you will be using the mouse
-    {
-      "<leader>v",
-      function() require("oklch-color-picker").pick_under_cursor() end,
-      desc = "Color pick under cursor",
-    },
-  },
-  ---@type oklch.Opts
-  opts = {},
-},
-{
-  "luckasRanarison/tailwind-tools.nvim",
-  name = "tailwind-tools",
-  build = ":UpdateRemotePlugins",
-  dependencies = {
-    "nvim-treesitter/nvim-treesitter",
-    "nvim-telescope/telescope.nvim", -- optional
-    "neovim/nvim-lspconfig", -- optional
-  },
-  opts = {} -- your configuration
 },{
-  "mattn/emmet-vim",
-  ft = { "html", "css", "javascript", "typescript", "typescriptreact", "jsx", "tsx" },
-  config = function()
-    vim.g.user_emmet_install_global = 0
-    vim.api.nvim_create_autocmd("FileType", {
-      pattern = { "html", "css", "javascript", "typescript", "jsx", "tsx", "typescriptreact" },
-      callback = function()
-        vim.cmd("EmmetInstall")
-      end,
-    })
-  end,
-},
-{
-  "dcampos/cmp-emmet-vim",
-  ft = { "html", "css", "javascript", "typescript", "jsx", "tsx", "typescriptreact" },
+  "nvim-treesitter/nvim-treesitter-context",
+  event = "VeryLazy",
+  dependencies = { "nvim-treesitter/nvim-treesitter" },
+  opts = {
+    enable = true,            -- Enable this plugin (Can be enabled/disabled later via commands)
+    max_lines = 0,            -- How many lines the window should span. 0 = infinite
+    trim_scope = 'outer',     -- Which context lines to discard if `max_lines` is exceeded. 'inner' or 'outer'
+    mode = 'cursor',          -- Line used to calculate context. 'cursor' or 'topline'
+    separator = nil,          -- Optional separator char between context and content
+    zindex = 20,              -- The Z-index of the context window
+    on_attach = nil,          -- (fun(buf: integer): boolean) return false to disable attaching
+  }
 },
 
 {
   "hrsh7th/nvim-cmp",
+  lazy = false,
   event = "InsertEnter",
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",
@@ -125,8 +90,113 @@ return {
       }
     })
   end,
-}
-, {
+},
+
+{
+  "nvim-telescope/telescope-file-browser.nvim",
+  dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+  config = function()
+    require("telescope").load_extension("file_browser")
+  end,
+},
+{
+  "eero-lehtinen/oklch-color-picker.nvim",
+  event = "VeryLazy",
+  version = "*",
+  keys = {
+    -- One handed keymap recommended, you will be using the mouse
+    {
+      "<leader>v",
+      function() require("oklch-color-picker").pick_under_cursor() end,
+      desc = "Color pick under cursor",
+    },
+  },
+  ---@type oklch.Opts
+  opts = {},
+},
+{
+  "luckasRanarison/tailwind-tools.nvim",
+  name = "tailwind-tools",
+  build = ":UpdateRemotePlugins",
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+    "nvim-telescope/telescope.nvim", -- optional
+    "neovim/nvim-lspconfig", -- optional
+  },
+  opts = {} -- your configuration
+},{
+  "mattn/emmet-vim",
+  ft = { "html", "css", "javascript", "typescript", "typescriptreact", "jsx", "tsx" },
+  config = function()
+    vim.g.user_emmet_install_global = 0
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = { "html", "css", "javascript", "typescript", "jsx", "tsx", "typescriptreact" },
+      callback = function()
+        vim.cmd("EmmetInstall")
+      end,
+    })
+  end,
+},
+
+{
+  "folke/trouble.nvim",
+  opts = {}, -- for default options, refer to the configuration section for custom setup.
+  cmd = "Trouble",
+  keys = {
+    {
+      "<leader>e",
+      "<cmd>Trouble diagnostics toggle<cr>",
+      desc = "Diagnostics (Trouble)",
+    },
+    {
+      "<leader>xX",
+      "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+      desc = "Buffer Diagnostics (Trouble)",
+    },
+    {
+      "<leader>cs",
+      "<cmd>Trouble symbols toggle focus=false<cr>",
+      desc = "Symbols (Trouble)",
+    },
+    {
+      "<leader>cl",
+      "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+      desc = "LSP Definitions / references / ... (Trouble)",
+    },
+    {
+      "<leader>xL",
+      "<cmd>Trouble loclist toggle<cr>",
+      desc = "Location List (Trouble)",
+    },
+    {
+      "<leader>xQ",
+      "<cmd>Trouble qflist toggle<cr>",
+      desc = "Quickfix List (Trouble)",
+    },
+  },
+},
+{
+  "nvimtools/none-ls.nvim", -- new home of null-ls
+  dependencies = { "nvim-lua/plenary.nvim" },
+  config = function()
+    local null_ls = require("null-ls")
+
+    null_ls.setup({
+      sources = {
+        null_ls.builtins.diagnostics.eslint_d.with({
+          diagnostics_format = "[eslint] #{m} (#{c})",
+          extra_args = {"--ext", ".ts,.tsx"},
+          condition = function(utils)
+            -- only run if eslint config is present
+            return utils.root_has_file({"eslint.config.mjs", ".eslintrc.js", ".eslintrc.json", ".eslintrc.cjs" })
+          end,
+        }),
+        null_ls.builtins.code_actions.eslint_d, -- optional: enable eslint fixes
+      },
+    })
+  end
+},
+ {
     "aaronhallaert/advanced-git-search.nvim",
     cmd = { "AdvancedGitSearch" },
     config = function()
@@ -203,8 +273,8 @@ return {
   config = function()
     require("nvim-treesitter.configs").setup({
       -- Basic Treesitter setup
-      ensure_installed = { "lua", "typescript", "javascript" }, -- Add your preferred languages
-      highlight = { enable = true },
+      ensure_installed = { "lua", "typescript", "javascript", "go", "html", "css" }, -- Add your preferred languages
+      highlight = { enable = false, additional_vim_regex_highlighting = true },
       -- Textobjects configuration
       textobjects = {
         select = {
@@ -221,15 +291,23 @@ return {
           enable = true,
           set_jumps = true,
           goto_next_start = {
-            ["]m"] = "@function.outer",
+            ["<leader>f"] = "@function.name",
           },
           goto_previous_start = {
-            ["[m"] = "@function.outer",
+            ["<S-f>"] = "@function.name",
           },
           goto_next_tag_end = {
             ["]t"] = "@tag.open_end",
-          }
+          },
         },
+        refactor = {
+          smart_rename = {
+            enable = true,
+            keymaps = {
+              smart_rename = "grr"
+          }
+        }
+      }
       },
     })
   end,
@@ -241,56 +319,7 @@ return {
 },
 {"nvim-lua/plenary.nvim"},
 
-{
-  "ThePrimeagen/harpoon",
-  branch = "harpoon2",
-  name = "harpoon",
-  module = "harpoon",
-  dependencies = { {"nvim-lua/plenary.nvim"}},
-  keys = {
-    { "<C-a>", mode = "n", desc = "Add file to harpoon" },
-    { "<leader>h", mode = "n", desc = "Toggle harpoon menu" },
-  },
-  config = function()
-  local harpoon = require("harpoon")
 
-  -- REQUIRED
-  harpoon:setup()
-
-  vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
-  vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
-  vim.keymap.set("n", "<C-n>", function() harpoon:list():next({ui_nav_wrap = true}) end)
-
-  end,
-}
-,
-  {
-  "nvim-cmp",
-  dependencies = {
-    {
-      "zbirenbaum/copilot-cmp",
-      dependencies = "copilot.lua",
-      opts = {},
-      config = function(_, opts)
-        local copilot_cmp = require("copilot_cmp")
-        copilot_cmp.setup(opts)
-        -- attach cmp source whenever copilot attaches
-        -- fixes lazy-loading issues with the copilot cmp source
-        -- LazyVim.lsp.on_attach(function(client)
-          -- copilot_cmp._on_insert_enter({})
-        -- end, "copilot")
-      end,
-    },
-  },
-  ---@param opts cmp.ConfigSchema
-  opts = function(_, opts)
-    table.insert(opts.sources, 1, {
-      name = "copilot",
-      group_index = 1,
-      priority = 100,
-    })
-  end,
-},
 ---@module "neominimap.config.meta"
 {
     "Isrothy/neominimap.nvim",
@@ -300,7 +329,7 @@ return {
     -- Optional
     keys = {
         -- Global Minimap Controls
-        { "<leader>nm", "<cmd>Neominimap toggle<cr>", desc = "Toggle global minimap" },
+        { "<leader>nm", "<cmd>Neominimap Toggle<cr>", desc = "Toggle global minimap" },
         { "<leader>no", "<cmd>Neominimap on<cr>", desc = "Enable global minimap" },
         { "<leader>nc", "<cmd>Neominimap off<cr>", desc = "Disable global minimap" },
         { "<leader>nr", "<cmd>Neominimap refresh<cr>", desc = "Refresh global minimap" },
@@ -347,67 +376,16 @@ return {
     end,
   },
 -- lazy.nvim:
+
 {
-    "smoka7/multicursors.nvim",
-    event = "VeryLazy",
-    dependencies = {
-        'nvimtools/hydra.nvim',
-    },
-    opts = {
-    DEBUG_MODE = false,
-    create_commands = true, -- create Multicursor user commands
-    updatetime = 50, -- selections get updated if this many milliseconds nothing is typed in the insert mode see :help updatetime
-    nowait = true, -- see :help :map-nowait
-    mode_keys = {
-        append = 'a',
-        change = 'c',
-        extend = 'e',
-        insert = 'i',
-    }, -- set bindings to start these modes
-    normal_keys = normal_keys,
-    insert_keys = insert_keys,
-    extend_keys = extend_keys,
-    -- see :help hydra-config.hint
-    hint_config = {
-        float_opts = {
-            border = 'none',
-        },
-        position = 'bottom',
-    },
-    -- accepted values:
-    -- -1 true: generate hints
-    -- -2 false: don't generate hints
-    -- -3 [[multi line string]] provide your own hints
-    -- -4 fun(heads: Head[]): string - provide your own hints
-    generate_hints = {
-        normal = true,
-        insert = true,
-        extend = true,
-        config = {
-             -- determines how many columns are used to display the hints. If you leave this option nil, the number of columns will depend on the size of your window.
-            column_count = nil,
-            -- maximum width of a column.
-            max_hint_length = 25,
-        }
-    },
-},
-    cmd = { 'MCstart', 'MCvisual', 'MCclear', 'MCpattern', 'MCvisualPattern', 'MCunderCursor' },
-    keys = {
-            {
-                mode = { 'v', 'n' },
-                '<Leader>m',
-                '<cmd>MCstart<cr>',
-                desc = 'Create a selection for selected text or word under the cursor',
-            },
-        },
-}
-  -- {
-  -- 	"nvim-treesitter/nvim-treesitter",
-  -- 	opts = {
-  -- 		ensure_installed = {
-  -- 			"vim", "lua", "vimdoc",
-  --      "?tml", "css"
-  -- 		},
-  -- 	},
-  -- },
+  "terryma/vim-multiple-cursors",
+  -- Optionally, set a lazy-loading event or keymaps
+  -- If you want to set up key mappings for the plugin, you can add a keys section:
+  laz = false,
+  keys = {
+    { "<C-n>", "<Plug>(multiple-cursors-next)", mode = { "v" } },
+    { "<C-p>", "<Plug>(multiple-cursors-prev)", mode = { "v" } },
+    { "<C-q>", "<Plug>(multiple-cursors-quit)", mode = { "v" } },
+  },
+},{ import = "nvchad.blink.lazyspec" }
 }
