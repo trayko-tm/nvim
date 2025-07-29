@@ -25,6 +25,45 @@ return {
   }
 },
 
+
+
+
+{
+  "andymass/vim-matchup",
+  event = "VeryLazy",
+  init = function()
+    vim.g.matchup_matchparen_enabled = 1
+    vim.g.matchup_matchparen_offscreen = { method = "popup" }
+    vim.g.matchup_matchparen_hi_surround_always = 0
+    vim.g.matchup_matchparen_hi_surround = 0
+    vim.g.matchup_matchparen_single = 0
+  end,
+  config = function()
+    -- Use an autocommand to override colorscheme later
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      callback = function()
+        vim.cmd([[
+          highlight MatchParen guibg=#444444 guifg=NONE gui=NONE
+          highlight MatchWord guibg=NONE guifg=NONE gui=NONE
+          highlight MatchTag guibg=NONE guifg=NONE gui=NONE
+        ]])
+      end,
+    })
+
+    -- Immediately apply it as well
+    vim.cmd([[
+      highlight MatchParen guibg=#444444 guifg=NONE gui=NONE
+      highlight MatchWord guibg=NONE guifg=NONE gui=NONE
+      highlight MatchTag guibg=NONE guifg=NONE gui=NONE
+    ]])
+  end,
+}
+,
+
+
+
+
+
 {
   "hrsh7th/nvim-cmp",
   lazy = false,
@@ -250,32 +289,37 @@ return {
     -- event = 'BufWritePre', -- uncomment for format on save
     opts = require "configs.conform",
   },
-  {
-      'zbirenbaum/copilot.lua',
-      cmd = 'Copilot',
-      event = 'InsertEnter',
-      build = ':Copilot auth',
-      opts = {
-        suggestion = {enabled = false},
-        panel = { enabled = false},
-        filetypes = {
-          markdown = true,
-          help = true
-        }
-      },
-      config = function()
-        -- require("copilot").setup({})
-      end,
-   },
+{
+  "github/copilot.vim",
+  event = "InsertEnter", -- Lazy load on entering insert mode
+},
+{
+  "CopilotC-Nvim/CopilotChat.nvim",
+  dependencies = {
+    { "github/copilot.vim" } -- required as backend
+  },
+  config = function()
+    require("CopilotChat").setup()
+  end,
+  cmd = "CopilotChat"
+},
+
 {
   "nvim-treesitter/nvim-treesitter",
   build = ":TSUpdate",
+  dependencies = {
+    {
+      "nvim-treesitter/nvim-treesitter-textobjects",
+      lazy = false, -- Ensures it's loaded early
+    },
+  },
   config = function()
     require("nvim-treesitter.configs").setup({
-      -- Basic Treesitter setup
-      ensure_installed = { "lua", "typescript", "javascript", "go", "html", "css" }, -- Add your preferred languages
-      highlight = { enable = false, additional_vim_regex_highlighting = true },
-      -- Textobjects configuration
+      ensure_installed = { "lua", "typescript", "javascript", "go", "html", "css", "python" },
+      highlight = {
+        enable = false,
+        additional_vim_regex_highlighting = true,
+      },
       textobjects = {
         select = {
           enable = true,
@@ -285,46 +329,61 @@ return {
             ["if"] = "@function.inner",
             ["at"] = "@tag.outer",
             ["it"] = "@tag.inner",
+            ["av"] = "@jsx_element.outer",
+            ["ac"] = "@class.outer",
+            ["ic"] = "@class.inner",
+            ["as"] = "@statement.outer",
+            ["is"] = "@statement.inner",
+            ["iv"] = "@jsx_element.inner",
           },
         },
         move = {
           enable = true,
           set_jumps = true,
           goto_next_start = {
-            ["<leader>f"] = "@function.name",
+            ["]e"] = "@variable.outer",
+            ["]s"] = "@statement.outer",
+            ["]r"] = "@return.outer",
+            ["tt"] = "@jsx.element",
+            ["<S-f>"] = "@function.outer",
           },
           goto_previous_start = {
-            ["<S-f>"] = "@function.name",
+            ["[t"] = "@jsx.element",
+            ["[e"] = "@variable.outer",
+            ["[s"] = "@statement.outer",
           },
           goto_next_tag_end = {
-            ["]t"] = "@tag.open_end",
+            -- ["]t"] = "@tag.open_end",
           },
         },
         refactor = {
           smart_rename = {
             enable = true,
             keymaps = {
-              smart_rename = "grr"
-          }
-        }
-      }
+              smart_rename = "grr",
+            },
+          },
+        },
       },
     })
   end,
 },
-{
-  "nvim-treesitter/nvim-treesitter-textobjects",
-  dependencies = { "nvim-treesitter" },
-  lazy = false
-},
+
 {"nvim-lua/plenary.nvim"},
+{
+  "nvim-treesitter/playground",
+  cmd = "TSPlaygroundToggle",  -- lazy-load on this command
+  config = function()
+    vim.keymap.set("n", "<leader>tp", "<cmd>TSPlaygroundToggle<CR>")
+  end,
+},
 
 
 ---@module "neominimap.config.meta"
 {
     "Isrothy/neominimap.nvim",
     version = "v3.*.*",
-    enabled = true,
+    enabled = false,
     lazy = false, -- NOTE: NO NEED to Lazy load
     -- Optional
     keys = {

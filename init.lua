@@ -94,19 +94,17 @@ dofile(vim.g.base46_cache .. "statusline")
 require "options"
 require "nvchad.autocmds"
 
+
 vim.api.nvim_create_autocmd("BufWritePost", {
-  pattern = { "*.ts", "*.js", "*.tsx", "*.json", "*.css", "*.go" },
+  pattern = { "*.ts", "*.tsx", "*.js", "*.jsx" },
   callback = function()
-  local file = vim.fn.expand("%:p")
-  if vim.fn.expand("%:e") == "go" then
-    vim.cmd("silent! !gofmt -w " .. file)
-    vim.cmd("edit!")
-    else
-      vim.cmd("silent! !npx prettier --write " .. file)
-    end
+    local file = vim.fn.expand("%:p")
+    vim.cmd("silent! !npx eslint --fix " .. file)
+    vim.cmd("silent! !npx prettier --write " .. file)
     vim.cmd("edit")
   end,
 })
+
 
 vim.schedule(function()
   require "mappings"
@@ -119,11 +117,23 @@ vim.opt.linebreak = true
 
 
 -- Auto-hover on CursorHold
-vim.cmd [[
-  autocmd CursorHold * lua vim.lsp.buf.hover()
-]]
 
-vim.o.updatetime = 1000  -- 500ms idle before triggering CursorHold
+vim.api.nvim_create_autocmd("CursorHold", {
+  pattern = "*",
+  callback = function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local clients = vim.lsp.get_clients({ bufnr = bufnr }) -- ✅ new recommended API
+
+    for _, client in ipairs(clients) do
+      if client.supports_method("textDocument/hover") then
+        vim.lsp.buf.hover()
+        break
+      end
+    end
+  end,
+})
+
+vim.o.updatetime = 2000  -- 500ms idle before triggering CursorHold
 vim.o.winblend = 10
 vim.lsp.handlers["textDocument/hover"] =  vim.lsp.with(
   vim.lsp.handlers.hover,
@@ -132,3 +142,22 @@ vim.lsp.handlers["textDocument/hover"] =  vim.lsp.with(
 
 
 
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = vim.api.nvim_create_augroup("FocusMainBufferAfterStartup", { clear = true }),
+  nested = true,
+  callback = function()
+    -- Delay the keypress to allow NvimTree to fully open
+    vim.defer_fn(function()
+      -- Switch to the right window (from NvimTree to main buffer)
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-w>l", true, false, true), "n", false)
+    end, 10)
+  end,
+})
+
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LspJumped",
+  callback = function()
+    vim.cmd("lclose") 
+  end,
+})

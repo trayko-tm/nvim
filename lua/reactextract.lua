@@ -51,9 +51,8 @@ function reactextract.extract()
   local component_dir = resolved_path:match("(.+)/[^/]+%.tsx$") or "."
 
   local component_lines = {
-    "import React from 'react';",
     "",
-    "export const " .. component_name .. " = (props) => {",
+    "export const " .. component_name .. " = () => {",
     "  return ("
   }
 

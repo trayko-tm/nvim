@@ -7,28 +7,69 @@ local map = vim.keymap.set
 
 -- map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
-map("n", "ga", "<cmd>AdvancedGitSearch search_log_content_file<CR>", { desc = "Show file history log" })
+map("n", "gh", "<cmd>AdvancedGitSearch search_log_content_file<CR>", { desc = "Show file history log" })
 map('n', 'gs', '<cmd>Telescope lsp_document_symbols<CR>', { noremap=true, silent=true })
 map('n', 'gb', '<cmd>Telescope git_bcommits<CR>', { noremap=true, silent=true })
-map('n', 'gc', '<cmd>Telescope git_bcommits_range<CR>', { noremap=true, silent=true })
+-- map('n', 'gh', '<cmd>Telescope git_bcommits_range<CR>', { noremap=true, silent=true })
+map('v', 'gh', '<cmd>Telescope git_bcommits_range<CR>', { noremap=true, silent=true })
 map("n", "<Leader>g", [[:lua show_git_log_popup()<CR>]], { noremap = true, silent = true })
 map("n", "gi", "<cmd>vim.lsp.buf.implementation<CR>", {desc = "Go to implementation"})
-map("n", "gr", ":lua require('telescope.builtin').lsp_references()<CR>", { noremap = true, silent = true })
+map("n", "gr", ":lua require('telescope.builtin').lsp_references({ initial_mode = 'normal'})<CR>", { noremap = true, silent = true })
 map("n", "g2", ":diffget 2<CR>", { desc = "Get diff from buffer 2" })
 map("n", "g1", ":diffget 1<CR>", { desc = "Get diff from buffer 2" })
-map('n', '<leader>c', '<cmd>lua vim.cmd("normal! f" .. vim.fn.nr2char(vim.fn.getchar()) .. "lC")<CR>', { noremap = true, silent = true })
+--map('n', '<leader>c', '<cmd>lua vim.cmd("normal! f" .. vim.fn.nr2char(vim.fn.getchar()) .. "lC")<CR>', { noremap = true, silent = true })
+map("n", "<leader>c", "<cmd>CopilotChat<CR>", { noremap=true, silent=true })
+map("n", "<leader>s", "<cmd>:Share<CR>", { noremap=true, silent=true })
+map("n", "<Leader>tt", [[:NvimTreeToggle<CR>]], { noremap = true, silent = true })
 map("n", "QQ", "<cmd>q!<CR>", { noremap=true, silent=true })
 map("n", "ss", "<cmd>lua require('telescope.builtin').lsp_document_symbols()<CR>", { noremap=true, silent=true })
 map('n', '<C-g>', ':echo expand("%:p")<CR>', { noremap = true, silent = true })
-map("n", "ff", "<cmd>Telescope find_files<cr>", { desc = "telescope find files" })
-map("n", "fw", "<cmd>Telescope live_grep<CR>", { desc = "telescope live grep" })
+map("n", "fj", "<cmd>Telescope current_buffer_fuzzy_find<cr>", { desc = "telescope find buffer" })
+map("n", "fk", "<cmd>Telescope buffers<CR>", { desc = "telescope search in open buffers" })
+map("n", "fw", "<cmd>Telescope live_grep<cr>", { desc = "telescope find files" })
+map("n", "ff", "<cmd>Telescope find_files<CR>", { desc = "telescope live grep" })
 map("n", "<C-s>", "<cmd>:w<CR>", { noremap = true, desc = "Save Buffer" })
-map("n", "<C-k>", "<C-y>", { noremap = true, desc = "Scroll content up" })
-map("n", "<C-j>", "<C-e>", { noremap = true, desc = "Scroll content down" })
+map("n", "<C-k>", "5<C-y>", { noremap = true, desc = "Scroll content up" })
+map("n", "<C-j>", "5<C-e>", { noremap = true, desc = "Scroll content down" })
 map("n", "<S-j>", "5j", { noremap = true, desc = "Scroll content up" })
 map("n", "<S-k>", "5k", { noremap = true, desc = "Scroll content down" })
 map("n", "<C-A-j>", "<C-w>j", { desc = "Switch window down" })
 map("n", "<C-A-k>", "<C-w>k", { desc = "Switch window up" })
+map("n", "s", "C", { noremap = true, desc = "Change to end of line (s remapped)" })
+map("v", "s", "C", { noremap = true, desc = "Change to end of line (s remapped)" })
+map("n", "ZZ", "ZQ", { noremap = true, desc = "Quit without saving " })
+
+local function change_word_after(symbol)
+  local escaped = vim.fn.escape(symbol, [[\]])
+  vim.cmd("normal! f" .. escaped .. "wciw")
+end
+
+-- Define your custom symbols
+local custom_symbols = {
+  [":"] = "ca:",
+  ["-"] = "ca-",
+  ["="] = "ca=",
+  ["("] = "ca(",
+  ["["] = "ca[",
+  ["&"] = "ca&",
+}
+
+-- Create the keymaps
+for symbol, keys in pairs(custom_symbols) do
+  vim.keymap.set("n", keys, function()
+    change_word_after(symbol)
+  end, { desc = "Change word after '" .. symbol .. "'" })
+end
+
+-- Disable default <Tab> key mapping
+vim.g.copilot_no_tab_map = true
+
+-- Map <C-\> to accept Copilot suggestion
+vim.api.nvim_set_keymap("i", "<C-\\>", 'copilot#Accept("<CR>")', {
+  expr = true,
+  silent = true,
+  noremap = true
+})
 
 
 vim.keymap.set("v", "<Leader>je", reactextract.extract, { desc = "Extract JSX to new file" })
@@ -62,6 +103,11 @@ map("n", "<C-Space>",vim.lsp.buf.code_action, {desc = "Complete the suggested ac
 -- map("n", "<C-n>", "<Plug>(multiple-cursors-next)", {desc = "multicursor next"} )
 -- map("n", "<leader>r", 'ciw<C-r>0<Esc>')
 -- map("n", "<C-r>", 'ciw<C-r>0<Esc>')
+
+vim.keymap.set("n", "<leader>fn", function()
+  require("nvim-treesitter.textobjects.move").goto_next_start("@function.outer", false, true)
+  vim.cmd("normal! w")
+end, { desc = "Next function name" })
 
 vim.keymap.set("n", "nf", function()
   require("nvim-treesitter.textobjects.move").goto_next_start("@function.name", "textobjects")
@@ -120,7 +166,7 @@ function show_git_log_popup()
         if vim.api.nvim_win_is_valid(win) then
           vim.api.nvim_win_close(win, true)
         end
-      end, 2000)
+      end, 5000)
 
     -- Set filetype for Git syntax highlighting
     vim.api.nvim_buf_set_option(buf, 'filetype', 'git')
@@ -191,3 +237,12 @@ end, {})
 -- Bind <leader>ll to run the command
 vim.keymap.set("n", "<leader>ll", ":TroubleEslint<CR>", { desc = "Run ESLint on src/ and show in Trouble" })
 
+-- Open a file in finder
+vim.api.nvim_create_user_command("Share", function()
+  local filepath = vim.fn.expand("%:p")
+  vim.fn.jobstart({ "open", "-R", filepath }, { detach = true })
+end, {})
+
+vim.cmd [[
+  cabbrev share Share
+]]
